@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compras</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Lista de Compras</h1>
+            <p>Gerencie seu orçamento e prioridades</p>
+        </header>
+
+        <section class="orcamento-section">
+            <h2>Orçamento Disponível</h2>
+            <div class="input-group">
+                <label for="orcamento">Valor disponível (R$):</label>
+                <input type="number" id="orcamento" step="0.01" placeholder="Ex: 200,00">
+                <button id="salvarOrcamentoBtn" class="btn-primary">Salvar Orçamento</button>
+            </div>
+            <div class="orcamento-info">
+                <p><strong>Total da compra:</strong> R$ <span id="totalCompra">0,00</span></p>
+                <p><strong>Restante:</strong> R$ <span id="restante">0,00</span></p>
+                <div id="alertaOrcamento" class="alerta"></div>
+            </div>
+        </section>
+
+        <section class="add-produto-section">
+            <h2>Adicionar Produto</h2>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="produtoNome">Nome do produto:</label>
+                    <input type="text" id="produtoNome" placeholder="Ex: Arroz">
+                </div>
+                <div class="input-group">
+                    <label for="produtoPreco">Preço (R$):</label>
+                    <input type="number" id="produtoPreco" step="0.01" placeholder="Ex: 5,99">
+                </div>
+                <div class="input-group">
+                    <label for="produtoPrioridade">Prioridade:</label>
+                    <select id="produtoPrioridade">
+                        <option value="Alta">🔴 Alta</option>
+                        <option value="Média">🟡 Média</option>
+                        <option value="Baixa">🟢 Baixa</option>
+                    </select>
+                </div>
+                <div class="input-group button-group">
+                    <button id="adicionarBtn" class="btn-success">Adicionar Produto</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="sugestoes-section">
+            <h2>Sugestões para não estourar o orçamento</h2>
+            <div id="sugestoesContainer" class="sugestoes-container">
+                <p class="sem-sugestoes">Nenhuma sugestão no momento.</p>
+            </div>
+        </section>
+
+        <section class="produtos-section">
+            <h2>Lista de Produtos</h2>
+            <div id="listaProdutos" class="lista-produtos">
+                <p class="lista-vazia">Nenhum produto cadastrado.</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- CORRIGIDO: script.js está na mesma pasta! -->
+    <script src="script.js"></script>
+</body>
+</html>

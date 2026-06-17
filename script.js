@@ -47,15 +47,16 @@ function carregarDados() {
 
 // Calcular o total da compra (soma todos os preços dos produtos)
 function calcularTotalCompra() {
-    // reduce percorre o array e acumula um valor
-    // soma todos os preços dos produtos
-    const total = produtos.reduce((soma, produto) => soma + produto.preco, 0);
-    return total;
+
+    return produtos.reduce((soma, produto) => {
+        return soma + (produto.preco || 0);
+    }, 0);
+
 }
 
 // Calcular quanto resta do orçamento
 function calcularRestante() {
-    return orcamentoDisponivel - calcularTotalCompra();
+    return orcamentoDisponivel;
 }
 
 // Atualizar exibição do orçamento na tela
@@ -78,14 +79,28 @@ function atualizarDisplayOrcamento() {
 }
 
 // ====================== FUNÇÃO DE SUGESTÃO INTELIGENTE ======================
+function calcularTotalPendente() {
 
+    return produtos.reduce((soma, produto) => {
+
+        if (
+            produto.status === 'Pendente' &&
+            produto.preco !== null
+        ) {
+            return soma + produto.preco;
+        }
+
+        return soma;
+
+    }, 0);
+
+}
 function gerarSugestoes() {
     // Limpar sugestões anteriores
     sugestoesContainer.innerHTML = '';
     
-    const total = calcularTotalCompra();
-    const restante = calcularRestante();
-    
+    const total = calcularTotalPendente();
+    const restante = orcamentoDisponivel - total;
     // Só gerar sugestões se estourou o orçamento
     if (restante >= 0) {
         sugestoesContainer.innerHTML = '<p class="sem-sugestoes" Orçamento OK! Nenhuma sugestão necessária.</p>';
@@ -139,7 +154,7 @@ function gerarSugestoes() {
     // Exibir sugestões na tela
     if (sugestoes.length > 0) {
         const titulo = document.createElement('p');
-        titulo.innerHTML = `<strong>💡 Para ficar dentro do orçamento, considere remover:</strong>`;
+        titulo.innerHTML = `<strong> Para ficar dentro do orçamento, considere remover:</strong>`;
         titulo.style.marginBottom = '10px';
         sugestoesContainer.appendChild(titulo);
         
@@ -147,7 +162,7 @@ function gerarSugestoes() {
             const sugestaoDiv = document.createElement('div');
             sugestaoDiv.className = 'sugestao-item';
             sugestaoDiv.innerHTML = `
-                🛍️ ${produto.nome} - R$ ${produto.preco.toFixed(2)} 
+                 ${produto.nome} - R$ ${produto.preco.toFixed(2)} 
                 (Prioridade: ${produto.prioridade})
                 <button onclick="sugerirRemover('${produto.id}')" class="btn-danger" style="margin-left: 10px;">Remover</button>
             `;
@@ -197,8 +212,14 @@ function renderizarLista() {
         infoDiv.className = 'produto-info';
         infoDiv.innerHTML = `
             <span class="produto-nome">${produto.nome}</span>
-            <span class="produto-preco">R$ ${produto.preco.toFixed(2)}</span>
-            <span class="${prioridadeClass}">🎯 ${produto.prioridade}</span>
+            <span class="produto-preco">
+    ${
+        produto.preco !== null
+            ? `R$ ${produto.preco.toFixed(2)}`
+            : 'Preço não informado'
+    }
+</span>
+            <span class="${prioridadeClass}"> ${produto.prioridade}</span>
             <span>📌 Status: ${produto.status}</span>
         `;
         
@@ -220,7 +241,7 @@ function renderizarLista() {
         
         // Botão para excluir
         const excluirBtn = document.createElement('button');
-        excluirBtn.textContent = '🗑️ Excluir';
+        excluirBtn.textContent = ' Excluir';
         excluirBtn.className = 'btn-danger';
         excluirBtn.onclick = () => excluirProduto(produto.id);
         
@@ -238,68 +259,80 @@ function renderizarLista() {
 // ====================== FUNÇÃO PARA ADICIONAR PRODUTO (CREATE) ======================
 
 function adicionarProduto() {
-    // Obter valores dos inputs
-    const nome = produtoNomeInput.value.trim(); // trim remove espaços extras
-    const preco = parseFloat(produtoPrecoInput.value);
+
+    const nome = produtoNomeInput.value.trim();
+    const preco = produtoPrecoInput.value === ''
+        ? null
+        : parseFloat(produtoPrecoInput.value);
+
     const prioridade = produtoPrioridadeSelect.value;
-    
-    // Validação: verificar se os campos estão preenchidos corretamente
+
     if (nome === '') {
         alert('Por favor, digite o nome do produto!');
         return;
     }
-    
-    if (isNaN(preco) || preco <= 0) {
-        alert('Por favor, digite um preço válido (maior que zero)!');
-        return;
-    }
-    
-    // Criar objeto do produto
-    // Date.now() gera um ID único baseado no timestamp atual
+
     const novoProduto = {
-        id: Date.now().toString(), // ID único
+        id: Date.now().toString(),
         nome: nome,
         preco: preco,
         prioridade: prioridade,
-        status: 'Pendente' // Status inicial
+        status: 'Pendente'
     };
-    
-    // Adicionar ao array de produtos
+
     produtos.push(novoProduto);
-    
-    // Salvar no LocalStorage
+
     salvarDados();
-    
-    // Atualizar a interface
     renderizarLista();
     atualizarDisplayOrcamento();
     gerarSugestoes();
-    
-    // Limpar os campos do formulário
+
     produtoNomeInput.value = '';
     produtoPrecoInput.value = '';
     produtoPrioridadeSelect.value = 'Alta';
-    
-    // Focar no campo nome para facilitar próxima adição
+
     produtoNomeInput.focus();
 }
 
 // ====================== FUNÇÃO PARA ALTERNAR STATUS (UPDATE) ======================
 
 function alternarStatus(id) {
-    // find procura um produto pelo ID no array
+
     const produto = produtos.find(p => p.id === id);
-    
-    if (produto) {
-        // Alternar entre 'Pendente' e 'Comprado'
-        produto.status = produto.status === 'Pendente' ? 'Comprado' : 'Pendente';
-        
-        // Salvar e atualizar
-        salvarDados();
-        renderizarLista();
-        atualizarDisplayOrcamento();
-        gerarSugestoes();
+
+    if (!produto) return;
+
+    let precoCompra = produto.preco;
+
+    if (precoCompra === null || precoCompra === undefined) {
+
+        const valorDigitado = prompt(
+            `Digite o valor pago por "${produto.nome}":`
+        );
+
+        if (
+            valorDigitado === null ||
+            isNaN(parseFloat(valorDigitado)) ||
+            parseFloat(valorDigitado) <= 0
+        ) {
+            alert('Valor inválido!');
+            return;
+        }
+
+        precoCompra = parseFloat(valorDigitado);
+        produto.preco = precoCompra;
     }
+
+    // Desconta do orçamento
+    orcamentoDisponivel -= precoCompra;
+
+    // Remove o produto da lista
+    produtos = produtos.filter(p => p.id !== id);
+
+    salvarDados();
+    renderizarLista();
+    atualizarDisplayOrcamento();
+    gerarSugestoes();
 }
 
 // ====================== FUNÇÃO PARA EDITAR PRODUTO (UPDATE) ======================
